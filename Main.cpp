@@ -7,6 +7,8 @@ struct sphere
 {
 	cv::Vec3f center;
 	float radius;
+
+	cv::Vec3f diffuse;
 };
 
 struct ray
@@ -18,6 +20,8 @@ struct ray
 struct light
 {
 	cv::Vec3f position;
+	cv::Vec3f color;
+	float intensity;
 };
 
 std::optional<float> ray_intersect_sphere(const ray& ray, const sphere& sphere)
@@ -37,7 +41,6 @@ std::optional<float> ray_intersect_sphere(const ray& ray, const sphere& sphere)
 	{
 		if (t0 >= 0) return t0;
 		if (t1 >= 0) return t1;
-		return {};
 	}
 
 	return {};
@@ -50,12 +53,17 @@ int main()
 
 	cv::Mat img = cv::Mat(screen_width, screen_height, CV_8UC3);
 	img = cv::Scalar(255, 0, 255);
+	
+	const light l1 = { { 300.0f, screen_height / 2.0f, 50.0f }, { 1, 0, 0 }, 300.0f };
 
-	const sphere s1 = { { screen_width / 2.0f, screen_height / 2.0f, 100.0f }, 100.0f };
-	const light l1 = { { screen_width / 2.0f, 0.0f, 200.0f } };
-
-	std::vector<sphere> spheres = { { { screen_width / 2.0f, screen_height / 2.0f, 100.0f }, 100.0f },
-									{ { 0.0f, screen_height / 2.0f, 100.0f }, 50.0f }
+	std::vector<sphere> spheres = {
+									{ { screen_width / 2.0f, screen_height / 2.0f, 3000 }, 340.0f, { 1, 1, 0 } }, // Back Wall
+									{ { 3000.0f + 340.0f, screen_height / 2.0f, 0.0f }, 3000.0f, { 0, 0, 1 }}, // Right Wall
+									{ { -3000.0f + 40.0f, screen_height / 2.0f, 0.0f }, 3000.0f, { 0, 0, 1 }}, // Left Wall
+									{ { screen_width / 2.0f, -3000.0f + 40.0f, 0.0f }, 3000.0f, { 1, 0, 0 } }, // Top Wall
+									{ { screen_width / 2.0f, 3000.0f + 300.0f, 0.0f }, 3000.0f, { 1, 0, 0 } }, // Bottom Wall
+									
+									{ { 100.0f, screen_height / 2.0f, 100.0f }, 50.0f, { 1, 1, 1 } } // Sphere 1
 									};
 
 	for(int y = 0; y < screen_height; ++y)
@@ -69,13 +77,13 @@ int main()
 				if (const auto distance = ray_intersect_sphere(r1, *it); distance >= 0)
 				{
 					cv::Vec3f sphere_intersection = r1.origin + distance.value() * r1.direction;
-					cv::Vec3f direction_light = cv::normalize(l1.position - sphere_intersection);
+					cv::Vec3f direction_light = l1.position - sphere_intersection;
 					cv::Vec3f normal = cv::normalize(sphere_intersection - (*it).center);
 
-					float coef = abs(normal.dot(direction_light));
-					uchar color = static_cast<uchar>(255 * coef);
+					float lightDistance2 = direction_light.dot(direction_light);
+					float coef = direction_light.dot(normal) / lightDistance2;
 
-					img.at<cv::Vec3b>(y, x) = { color, color, color };
+					img.at<cv::Vec3b>(y, x) = (l1.color * l1.intensity).mul((coef * (*it).diffuse) * 255);
 				}
 
 			}
