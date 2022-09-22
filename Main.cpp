@@ -48,13 +48,13 @@ std::optional<float> ray_intersect_sphere(const ray& ray, const sphere& sphere)
 
 int main()
 {
-	constexpr int screen_width = 400;
-	constexpr int screen_height = 400;
+	const int screen_width = 400;
+	const int screen_height = 400;
 
 	cv::Mat img = cv::Mat(screen_width, screen_height, CV_8UC3);
 	img = cv::Scalar(255, 0, 255);
 	
-	const light l1 = { { 300.0f, screen_height / 2.0f, 50.0f }, { 1, 0, 0 }, 300.0f };
+	const light l1 = { { 300.0f, screen_height / 2.0f, 50.0f }, { 1, 1, 1 }, 300.0f };
 
 	std::vector<sphere> spheres = {
 									{ { screen_width / 2.0f, screen_height / 2.0f, 3000 }, 340.0f, { 1, 1, 0 } }, // Back Wall
@@ -80,10 +80,23 @@ int main()
 					cv::Vec3f direction_light = l1.position - sphere_intersection;
 					cv::Vec3f normal = cv::normalize(sphere_intersection - (*it).center);
 
-					float lightDistance2 = direction_light.dot(direction_light);
-					float coef = direction_light.dot(normal) / lightDistance2;
+					cv::Vec3f direction_light_normalized = cv::normalize(direction_light);
 
-					img.at<cv::Vec3b>(y, x) = (l1.color * l1.intensity).mul((coef * (*it).diffuse) * 255);
+					const float light_distance2 = direction_light.dot(direction_light);
+					const float coef = direction_light.dot(normal) / light_distance2;
+
+					cv::Vec3f visibility = { 1, 1, 1 };
+
+					const float offset = 0.1f;
+					ray ray_shadow_sphere = { sphere_intersection + offset * direction_light_normalized, direction_light_normalized };
+					
+					if(const auto shadow_dist = ray_intersect_sphere(ray_shadow_sphere, *it); shadow_dist.has_value())
+					{
+						if (static_cast<float>(pow(shadow_dist.value(), 2)) > light_distance2) visibility = { 1, 1, 1 };
+						else visibility = { 0, 0, 0 };
+					}
+
+					img.at<cv::Vec3b>(y, x) = visibility.mul((l1.color * l1.intensity).mul((coef * (*it).diffuse) * 255));
 				}
 
 			}
