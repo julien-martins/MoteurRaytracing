@@ -54,15 +54,37 @@ std::optional<float> ray_intersect_plan(const ray& ray, const plan& plan)
 	return {};
 }
 
-std::optional<float> ray_intersect_triangle(const ray& ray, const triangle& triangle)
+bool ray_intersect_triangle(const ray& ray, const triangle& triangle)
 {
 	//Ax + By + Cz + D = 0
 	//with (A, B, C) normal
 	//D = -(Ax + By + Cz)
 	float D = triangle.normal.dot(triangle.v0);
 	float t = -(triangle.normal.dot(ray.origin) + D) / triangle.normal.dot(ray.direction);
-	if (t > 0) return t;
-	else {};
+	if (t < 0) return false;
+
+	cv::Vec3f triangle_intersection = ray.origin + t * ray.direction;
+	cv::Vec3f C;
+
+	//edge0
+	cv::Vec3f edge0 = triangle.v1 - triangle.v0;
+	cv::Vec3f vp0 = triangle_intersection - triangle.v0;
+	C = edge0.cross(vp0);
+	if (triangle.normal.dot(C) < 0) return false;
+
+	//edge 1
+	cv::Vec3f edge1 = triangle.v2 - triangle.v1;
+	cv::Vec3f vp1 = triangle_intersection - triangle.v1;
+	C = edge1.cross(vp1);
+	if (triangle.normal.dot(C) < 0) return false;
+
+	//edge 2
+	cv::Vec3f edge2 = triangle.v0 - triangle.v2;
+	cv::Vec3f vp2 = triangle_intersection - triangle.v2;
+	C = edge2.cross(vp2);
+	if (triangle.normal.dot(C) < 0) return false;
+
+	return true;
 }
 
 std::optional<float> ray_intersect_sphere(const ray& ray, const sphere& sphere)
@@ -167,6 +189,7 @@ int main()
 				}
 
 			}
+
 		}
 	}
 
