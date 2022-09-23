@@ -48,19 +48,22 @@ std::optional<float> ray_intersect_sphere(const ray& ray, const sphere& sphere)
 }
 
 std::optional<float> ray_intersect_objects(const ray& ray, const std::vector<sphere>& spheres) {
-	std::optional<float> min = 10000;
+	std::optional<float> min = {};
 	
 	for (auto& sphere : spheres) {
 		std::optional<float> dist = ray_intersect_sphere(ray, sphere);
 	
 		if (dist.has_value()) {
-			if (dist.value() < min.value())
+			if (min.has_value()) {
+				if (dist.value() < min.value())
+					min = dist.value();
+			}
+			else
 				min = dist.value();
 		}
 	}
 
-	if (min == 10000) return {};
-	else return min;
+	return min;
 }
 
 int main()
