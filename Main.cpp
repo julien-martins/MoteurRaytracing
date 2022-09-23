@@ -18,6 +18,15 @@ struct plan
 	cv::Vec3f normal;
 };
 
+struct triangle
+{
+	cv::Vec3f v0;
+	cv::Vec3f v1;
+	cv::Vec3f v2;
+
+	cv::Vec3f normal;
+};
+
 struct ray
 {
 	cv::Vec3f origin;
@@ -43,6 +52,17 @@ std::optional<float> ray_intersect_plan(const ray& ray, const plan& plan)
 	}
 
 	return {};
+}
+
+std::optional<float> ray_intersect_triangle(const ray& ray, const triangle& triangle)
+{
+	//Ax + By + Cz + D = 0
+	//with (A, B, C) normal
+	//D = -(Ax + By + Cz)
+	float D = triangle.normal.dot(triangle.v0);
+	float t = -(triangle.normal.dot(ray.origin) + D) / triangle.normal.dot(ray.direction);
+	if (t > 0) return t;
+	else {};
 }
 
 std::optional<float> ray_intersect_sphere(const ray& ray, const sphere& sphere)
@@ -109,6 +129,8 @@ int main()
 	};
 
 	plan plan = { { 0, 0, 0 }, { 0, 1, 0 } };
+
+	triangle triangle1 = { {0, 0, 0}, {1, 0, 0}, {0.5f, 1, 0}, {0, 0, 1} };
 
 	for(int y = 0; y < screen_height; ++y)
 	{
