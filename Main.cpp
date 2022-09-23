@@ -1,4 +1,5 @@
 #include <iostream>
+#include <optional>
 
 #include <opencv2/core.hpp>
 #include <opencv2/highgui.hpp>
@@ -46,6 +47,22 @@ std::optional<float> ray_intersect_sphere(const ray& ray, const sphere& sphere)
 	return {};
 }
 
+std::optional<float> ray_intersect_objects(const ray& ray, const std::vector<sphere>& spheres) {
+	std::optional<float> min = 10000;
+	
+	for (auto& sphere : spheres) {
+		std::optional<float> dist = ray_intersect_sphere(ray, sphere);
+	
+		if (dist.has_value()) {
+			if (dist.value() < min.value())
+				min = dist.value();
+		}
+	}
+
+	if (min == 10000) return {};
+	else return min;
+}
+
 int main()
 {
 	const int screen_width = 400;
@@ -54,16 +71,17 @@ int main()
 	cv::Mat img = cv::Mat(screen_width, screen_height, CV_8UC3);
 	img = cv::Scalar(255, 0, 255);
 	
-	const light l1 = { { 300.0f, screen_height / 2.0f, 50.0f }, { 1, 1, 1 }, 300.0f };
+	const light l1 = { { 200.0f, screen_height / 2.0f - 50.0f, 50.0f }, { 1, 1, 1 }, 300.0f };
 
 	std::vector<sphere> spheres = {
-									{ { screen_width / 2.0f, screen_height / 2.0f, 3000 }, 340.0f, { 1, 1, 0 } }, // Back Wall
-									{ { 3000.0f + 340.0f, screen_height / 2.0f, 0.0f }, 3000.0f, { 0, 0, 1 }}, // Right Wall
-									{ { -3000.0f + 40.0f, screen_height / 2.0f, 0.0f }, 3000.0f, { 0, 0, 1 }}, // Left Wall
-									{ { screen_width / 2.0f, -3000.0f + 40.0f, 0.0f }, 3000.0f, { 1, 0, 0 } }, // Top Wall
-									{ { screen_width / 2.0f, 3000.0f + 300.0f, 0.0f }, 3000.0f, { 1, 0, 0 } }, // Bottom Wall
+									{ { screen_width / 2.0f, screen_height / 2.0f, 8000.0f + 250.0f }, 8000.0f, { 1, 1, 0 } }, // Back Wall
+									{ { 8000.0f + 340.0f, screen_height / 2.0f, -500.0f }, 8000.0f, { 0, 0, 1 }}, // Right Wall
+									{ { -8000.0f + 40.0f, screen_height / 2.0f, -500.0f }, 8000.0f, { 0, 0, 1 }}, // Left Wall
+									{ { screen_width / 2.0f, -8000.0f + 40.0f, -500.0f }, 8000.0f, { 1, 0, 0 } }, // Top Wall
+									{ { screen_width / 2.0f, 8000.0f + 300.0f, -500.0f }, 8000.0f, { 1, 0, 0 } }, // Bottom Wall
 									
-									{ { 100.0f, screen_height / 2.0f, 100.0f }, 50.0f, { 1, 1, 1 } } // Sphere 1
+									{ { 100.0f, screen_height / 2.0f, 150.0f }, 50.0f, { 1, 1, 1 } }, // Sphere 1
+									{ { 250.0f, screen_height / 2.0f, 150.0f }, 50.0f, { 1, 1, 1 } } // Sphere 2
 									};
 
 	for(int y = 0; y < screen_height; ++y)
@@ -90,7 +108,7 @@ int main()
 					const float offset = 0.1f;
 					ray ray_shadow_sphere = { sphere_intersection + offset * direction_light_normalized, direction_light_normalized };
 					
-					if(const auto shadow_dist = ray_intersect_sphere(ray_shadow_sphere, *it); shadow_dist.has_value())
+					if(const auto shadow_dist = ray_intersect_objects(ray_shadow_sphere, spheres); shadow_dist.has_value())
 					{
 						if (static_cast<float>(pow(shadow_dist.value(), 2)) > light_distance2) visibility = { 1, 1, 1 };
 						else visibility = { 0, 0, 0 };
