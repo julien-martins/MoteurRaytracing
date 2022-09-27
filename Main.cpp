@@ -4,41 +4,9 @@
 #include <opencv2/core.hpp>
 #include <opencv2/highgui.hpp>
 
-struct sphere
-{
-	cv::Vec3f center;
-	float radius;
-
-	cv::Vec3f diffuse;
-};
-
-struct plan
-{
-	cv::Vec3f position;
-	cv::Vec3f normal;
-};
-
-struct triangle
-{
-	cv::Vec3f v0;
-	cv::Vec3f v1;
-	cv::Vec3f v2;
-
-	cv::Vec3f normal;
-};
-
-struct ray
-{
-	cv::Vec3f origin;
-	cv::Vec3f direction;
-};
-
-struct light
-{
-	cv::Vec3f position;
-	cv::Vec3f color;
-	float intensity;
-};
+#include "BoundingBox.h"
+#include "SimpleObject.h"
+#include "Tree.h"
 
 std::optional<float> ray_intersect_plan(const ray& ray, const plan& plan) 
 {
@@ -133,33 +101,51 @@ int main()
 	const int screen_width = 400;
 	const int screen_height = 400;
 
+	cv::Vec3f offsetCam = { screen_width / 2, screen_height / 2, -150 };
+
 	cv::Mat img = cv::Mat(screen_width, screen_height, CV_8UC3);
 	img = cv::Scalar(255, 0, 255);
 	
-	const light l1 = { { 100.0f, screen_height / 2.0f - 80.0f, 50.0f }, { 1, 1, 1 }, 300.0f };
-
+	/*
 	std::vector<sphere> spheres = {
-		{ { screen_width / 2.0f, screen_height / 2.0f, 3000.0f + 350.0f }, 3000.0f, { 1, 1, 0 } }, // Back Wall
-		{ { 3000.0f + 350.0f, screen_height / 2.0f, 0.0f }, 3000.0f, { 0, 0, 1 }}, // Right Wall
-		{ { -3000.0f + 40.0f, screen_height / 2.0f, 0.0f }, 3000.0f, { 0, 0, 1 }}, // Left Wall
-		{ { screen_width / 2.0f, -3000.0f + 60.0f, 0.0f }, 3000.0f, { 1, 0, 0 } }, // Top Wall
-		{ { screen_width / 2.0f, 3000.0f + 300.0f, 0.0f }, 3000.0f, { 1, 0, 0 } }, // Bottom Wall
+		{ { screen_width / 2.0f - 150.0f, screen_height / 2.0f, 200.0f }, 100.0f, { 1, 1, 0 } }, // Back Wall
+		{ { screen_width / 2.0f + 50.0f, screen_height / 2.0f, 300.0f }, 100.0f, { 0, 0, 1 }}, // Right Wall
 		
-									
-		{ { 100.0f, screen_height / 2.0f, 150.0f }, 50.0f, { 1, 1, 1 } }, // Sphere 1
-		{ { 250.0f, screen_height / 2.0f, 150.0f }, 50.0f, { 1, 1, 1 } } // Sphere 2
 	};
+	*/
 
-	plan plan = { { 0, 0, 0 }, { 0, 1, 0 } };
+	std::vector<sphere> spheres;
+	int sphere_radius = 40;
 
-	triangle triangle1 = { {0, 0, 0}, {1, 0, 0}, {0.5f, 1, 0}, {0, 0, 1} };
+	const light l1 = { { screen_width / 2.0f + (screen_width / sphere_radius) * sphere_radius / 2, screen_height / 2.0f + (screen_height / sphere_radius)*sphere_radius/2, 150.0f }, { 1, 1, 1 }, 200.0f };
+
+	int i = 0;
+	for (int y = 0; y < screen_height / sphere_radius; ++y)
+	{
+		for (int x = 0; x < screen_width / sphere_radius; ++x)
+		{
+			spheres.push_back({ {static_cast<float>(x) * sphere_radius * 2, static_cast<float>(y) * sphere_radius * 2, 300.0f}, static_cast<float>(sphere_radius), {1, 1, 1}});
+		}
+	}
 
 	for(int y = 0; y < screen_height; ++y)
 	{
 		for(int x = 0; x < screen_width; ++x)
 		{
-			ray r1 = { { static_cast<float>(x), static_cast<float>(y), 0 }, { 0, 0, 1 } };
+			cv::Vec3f pixelToSee = { static_cast<float>(x), static_cast<float>(y), 0 };
+			cv::Vec3f dir = cv::normalize(pixelToSee - offsetCam);
+			ray r1 = { pixelToSee, dir };
 
+			/*
+			if (box1.intersect(r1)) {
+				img.at<cv::Vec3b>(y, x) = { 0, 255, 255 };
+			}*/
+			
+			
+
+			
+			//Intersection spheres
+			
 			for (auto& sphere : spheres) {
 				if (const auto distance = ray_intersect_sphere(r1, sphere); distance.has_value())
 				{
