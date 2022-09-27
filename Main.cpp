@@ -96,6 +96,7 @@ std::optional<float> ray_intersect_objects(const ray& ray, const std::vector<sph
 	return min;
 }
 
+
 int main()
 {
 	const int screen_width = 400;
