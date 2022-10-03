@@ -78,8 +78,8 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>C:\Users\jmartins1\Documents\Unreal Projects\MoteurRaytracing\dependencies\opencv\include;$(IncludePath)</IncludePath>
-    <LibraryPath>C:\Users\jmartins1\Documents\Unreal Projects\MoteurRaytracing\dependencies\opencv\lib;$(LibraryPath)</LibraryPath>
+    <IncludePath>$(SolutionDir)\dependencies\opencv\include;$(IncludePath)</IncludePath>
+    <LibraryPath>$(SolutionDir)\dependencies\opencv\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
