@@ -161,14 +161,42 @@ std::optional<cv::Vec3f> compute_color(ray& ray_in, std::vector<sphere>& spheres
 			cv::Vec3f col;
 			if (const auto shadow_dist = ray_intersect_objects(reflect_ray, spheres, hit_sphere); shadow_dist.has_value())
 			{
-				col = hit_sphere.diffuse * 0.32f;
+				col = hit_sphere.diffuse * 0.98f;
 
 				//take the color of the hit
 				if (std::optional<cv::Vec3f> color = compute_color(reflect_ray, spheres, hit_sphere, light, dir, ++i); color.has_value()) {
-					return color.value() + col * 255;
+					return color.value() * 0.02f + col * 255;
 				}
 			}
 
+		}
+		else if (sphere_obj.Mat == "Transparent") {
+			//calculate reflection ray
+			cv::Vec3f reflectDir = reflect(dir, normal);
+			const float offset = 0.01f;
+			ray reflect_ray = { sphere_intersection + offset * reflectDir, reflectDir };
+
+			cv::Vec3f refractDir = refract(dir, normal, 1.0f);
+			ray refract_ray = { sphere_intersection + offset * reflectDir, reflectDir };
+
+			cv::Vec3f col;
+			if (const auto shadow_dist = ray_intersect_objects(reflect_ray, spheres, hit_sphere); shadow_dist.has_value())
+			{
+				col = hit_sphere.diffuse * 0.55f;
+				float ran = rand();
+
+				if (ran > 0.5f) {
+					if (std::optional<cv::Vec3f> colorRefr = compute_color(refract_ray, spheres, hit_sphere, light, dir, ++i); colorRefr.has_value()) {
+						return colorRefr.value() + col;
+					}
+				}
+				else {
+					if (std::optional<cv::Vec3f> color = compute_color(reflect_ray, spheres, hit_sphere, light, dir, ++i); color.has_value()) {
+						return color.value() + col;
+					}
+				}
+				
+			}
 		}
 
 		//Calculate pixel of image
@@ -213,6 +241,7 @@ int main()
 	}
 
 	spheres.push_back({ { screen_width / 2 - 100, screen_height / 2, 100.0f}, 50.0f, {1, 0, 1}, "Mirror" });
+	spheres.push_back({ { screen_width / 2 + 100, screen_height / 2, 100.0f}, 50.0f, {1, 0, 1}, "Transparent" });
 
 	for(int y = 0; y < screen_height; ++y)
 	{	
