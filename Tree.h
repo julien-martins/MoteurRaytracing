@@ -57,8 +57,8 @@ typedef struct NodeTree {
 		//Divide the box in two with all spheres
 		root->box = createBoxAroundSpheres(spheres, root->spheres);
 
-		root->left = buildTree();
-		root->right = buildTree();
+		//root->left = buildTree();
+		//root->right = buildTree();
 
 		return root;
 	}

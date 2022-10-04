@@ -9,6 +9,7 @@ struct sphere
 	float radius;
 
 	cv::Vec3f diffuse;
+	std::string Mat;
 };
 
 struct plan
